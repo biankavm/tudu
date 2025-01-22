@@ -1,27 +1,24 @@
 import {useState} from 'react';
-import './home.css'
 import {Link} from 'react-router-dom';
 import {auth} from '../../firebaseConecction'
-import { signInWithEmailAndPassword } from 'firebase/auth'
-import { useNavigate } from 'react-router-dom';
-export default function Home(){
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import {useNavigate} from 'react-router-dom';
+export default function Register(){
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
 
-    async function handleLogin(e){
+    async function handleRegister(e){
         e.preventDefault();
         if (email !== '' && password !== ''){
-            await signInWithEmailAndPassword(auth, email, password)
+            await createUserWithEmailAndPassword(auth, email, password)
             .then(() => {
-                // navegar para /admin
                 navigate('/admin', {replace: true})
             })
             .catch((error) => {
-                console.log('Erro ao fazer login: ', error)
+                console.log('Erro ao fazer cadastro: ', error)
             })
-
         }
         else{
             alert('Preencha todos os campos!')
@@ -30,9 +27,9 @@ export default function Home(){
     }
     return(
         <div className="homeContainer">
-            <h1> Tudu </h1>
-            <span> Planeje, realize, conquiste – com Tudu </span>
-            <form className="form" onSubmit={handleLogin}>
+            <h1> Cadastre-se </h1>
+            <span> Vamos criar a sua conta: </span>
+            <form className="form" onSubmit={handleRegister}>
                 <input 
                     type="text" 
                     placeholder="Digite seu email" 
@@ -44,11 +41,11 @@ export default function Home(){
                     value={password}
                     onChange = {(e) => setPassword(e.target.value)} />
                     
-                <button type="submit"> Entrar </button>
+                <button type="submit"> Cadastrar </button>
             </form>
 
-            <Link to='/register' className="buttonLink">
-                Não possui uma conta? Cadastre-se agora.
+            <Link to='/' className="buttonLink">
+                Já possui uma conta? Faça o login agora.
             </Link>
         </div>
     )

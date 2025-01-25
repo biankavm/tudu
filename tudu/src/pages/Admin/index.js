@@ -120,7 +120,7 @@ export default function Admin(){
                 {Object.keys(editableTarefa).length > 0 ? (
                     <button type="submit" style={{backgroundColor: '#efe6dd'}} className="buttonRegister"> Atualizar Tarefa </button>
                 ): (
-                    <button type="submit" className="buttonRegister"> Registrar Tarefa </button>
+                    <button type="submit" className="buttonRegister buttonColor"> Registrar Tarefa </button>
                 )}
             </form>
 

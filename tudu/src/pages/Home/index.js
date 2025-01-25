@@ -2,9 +2,11 @@ import {useState} from 'react';
 import './home.css'
 import {Link} from 'react-router-dom';
 import {auth} from '../../firebaseConecction'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'
+import { GoogleLogo } from "@phosphor-icons/react";
+
 
 export default function Home(){
 
@@ -12,12 +14,25 @@ export default function Home(){
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
 
+    async function handleGoogleSign(){
+        const provider = new GoogleAuthProvider();
+
+        await signInWithPopup(auth, provider)
+        .then((result) => {
+            toast.success('Login realizado com sucesso!')
+            navigate('/admin', {replace: true})
+        })
+        .catch((error) => {
+            toast.error('Erro ao fazer login, tente novamente!')
+            console.log('Erro ao fazer login com Google: ', error)
+        })
+
+    }
     async function handleLogin(e){
         e.preventDefault();
         if (email !== '' && password !== ''){
             await signInWithEmailAndPassword(auth, email, password)
             .then(() => {
-                // navegar para /admin
                 toast.success('Login realizado com sucesso!')
                 navigate('/admin', {replace: true})
             })
@@ -48,10 +63,17 @@ export default function Home(){
                     value={password}
                     onChange = {(e) => setPassword(e.target.value)} />
                     
-                <button type="submit"> Entrar </button>
+                <button type="submit" className="buttonLogin"> Entrar </button>
+
             </form>
 
-            <Link to='/register' className="buttonLink">
+            <button onClick={(e) => handleGoogleSign(e)} className="customButton"> 
+                    <GoogleLogo className="buttonGoogle"/>
+                    Entrar com o Google
+                    
+                </button>
+
+            <Link to='/register' className="link">
                 Não possui uma conta? Cadastre-se agora.
             </Link>
         </div>

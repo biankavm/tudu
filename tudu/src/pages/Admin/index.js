@@ -2,20 +2,54 @@ import './admin.css'
 import {useState, useEffect } from 'react'
 import { auth, db } from '../../firebaseConecction'
 import { signOut} from 'firebase/auth'
-import { addDoc, collection } from 'firebase/firestore'
+import { addDoc, collection, onSnapshot, query, orderBy, where, doc, deleteDoc, updateDoc } from 'firebase/firestore'
 import { toast } from 'react-toastify';
 
 export default function Admin(){
     const [tarefa, setTarefa] = useState('')
     const [user, setUser] = useState({})
-
+    const [listaTarefas, setListaTarefas] = useState([])
+    const [editableTarefa, setEditableTarefa] = useState({})
     useEffect(() => {
         async function loadTarefas(){
             const userDetail = localStorage.getItem('@detailUser')
             setUser(JSON.parse(userDetail))
+
+            if (userDetail){
+                const data = JSON.parse(userDetail)
+
+                const tarefaRef = collection(db, 'tarefas')
+                const q = query(tarefaRef, orderBy('created', 'desc'), where('userUid', '==', data?.uid))
+                const unsub = onSnapshot(q, (snapshot) => {
+                    let list = []
+                    snapshot.forEach((doc) => {
+                        list.push({
+                            id: doc.id,
+                            tarefa: doc.data().task,
+                            userUid: doc.data().userUid,
+                        })
+                    })
+                    setListaTarefas(list)
+                })
+            }
         }
         loadTarefas()
     }, [])
+
+    async function handleUpdateTarefa(){
+        const docRef = doc(db, 'tarefas', editableTarefa.id)
+        await updateDoc(docRef, {
+            task: tarefa
+        })
+        .then(() => {
+            toast.success('Tarefa atualizada com sucesso!')
+        })
+        .catch(() => {
+            toast.error('Erro ao atualizar tarefa, tente novamente!')
+        })  
+        setTarefa('')
+        setEditableTarefa({})
+    }
     async function handleSubmit(e) {
         e.preventDefault()
         
@@ -25,6 +59,10 @@ export default function Admin(){
             return;
         }
 
+        if (editableTarefa?.id){
+            handleUpdateTarefa()
+            return
+        }
         await addDoc(collection(db, 'tarefas'), {
             task: tarefa,
             created: new Date().toLocaleDateString(),
@@ -53,6 +91,21 @@ export default function Admin(){
         })
     }
 
+    async function deleteTarefa(id){
+        const docRef = doc(db, 'tarefas', id)
+        await deleteDoc(docRef)
+        .then(() => {
+            toast.success('Tarefa concluída!')
+        })
+        .catch(() => {
+            toast.error('Erro ao concluir tarefa, tente novamente!')
+        })
+    }
+
+    async function editarTarefa(item){
+        setTarefa(item.tarefa)
+        setEditableTarefa(item)
+    }
     return(
         <div className="adminContainer">
             
@@ -64,17 +117,23 @@ export default function Admin(){
                     onChange={(e) => setTarefa(e.target.value)}
                 />
 
-                <button type="submit" className="buttonRegister"> Registrar Tarefa </button>
+                {Object.keys(editableTarefa).length > 0 ? (
+                    <button type="submit" style={{backgroundColor: '#efe6dd'}} className="buttonRegister"> Atualizar Tarefa </button>
+                ): (
+                    <button type="submit" className="buttonRegister"> Registrar Tarefa </button>
+                )}
             </form>
 
-            <article className="list">
-                <p> Estudar Javascript e ReactJS hoje a noite</p>
+           {listaTarefas.map((item) => (
+                <article className="list" key={item.id}>
+                <p> {item.tarefa} </p>
 
                 <div>
-                    <button className="buttonDone"> Editar </button>
-                    <button className="buttonDelete"> Concluir </button>
+                    <button className="buttonDone" onClick= {() => editarTarefa(item)}> Editar </button>
+                    <button className="buttonDelete" onClick={() => deleteTarefa(item.id)}> Concluir </button>
                 </div>
             </article>
+           ))}
 
             <button className="buttonLogout" onClick={handleLogout}>Sair</button>
 
